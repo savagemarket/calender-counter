@@ -1,269 +1,545 @@
-<!doctype html>
-<html lang="ko">
+﻿<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Calendar Counter</title>
+  <title>Calendar Counter Lab</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f5f7fb;
+      --bg: #f4f7f9;
       --panel: #ffffff;
-      --text: #1b2430;
-      --muted: #607086;
-      --accent: #0f7b6c;
-      --accent-strong: #0a5c51;
-      --line: #dce4ee;
-      --warn: #b35b00;
+      --ink: #18212f;
+      --muted: #5e6c7d;
+      --line: #d8e1ea;
+      --teal: #0b766e;
+      --blue: #285b9f;
+      --gold: #9a6a08;
+      --rose: #a13f52;
+      --shadow: 0 18px 42px rgba(20, 34, 52, 0.1);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
       background: var(--bg);
-      color: var(--text);
-      font-family: Arial, "Noto Sans KR", sans-serif;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
     }
 
-    main {
-      width: min(920px, calc(100vw - 32px));
+    .app {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 32px auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    header, .panel, .history-card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 28px;
-      box-shadow: 0 18px 45px rgba(27, 36, 48, 0.08);
+      box-shadow: var(--shadow);
     }
+
+    header {
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    h1, h2, h3, p { margin: 0; }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.05;
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: 1;
+      letter-spacing: 0;
     }
 
-    p {
-      margin: 0;
+    header p, .subtext {
+      margin-top: 10px;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.55;
+      max-width: 720px;
     }
+
+    .clock {
+      min-width: 220px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fbfd;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel { padding: 20px; }
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin: 26px 0;
+      gap: 14px;
     }
 
     label {
       display: grid;
-      gap: 8px;
-      font-size: 14px;
+      gap: 7px;
       color: var(--muted);
+      font-size: 14px;
     }
 
-    input {
+    input, select {
       width: 100%;
-      height: 44px;
+      height: 42px;
       border: 1px solid var(--line);
       border-radius: 6px;
-      padding: 0 12px;
-      font-size: 16px;
-      color: var(--text);
+      padding: 0 11px;
       background: #fff;
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     button {
-      height: 44px;
-      align-self: end;
+      min-height: 42px;
       border: 0;
       border-radius: 6px;
-      padding: 0 16px;
-      color: #fff;
-      background: var(--accent);
-      font-size: 16px;
+      padding: 0 14px;
+      background: var(--teal);
+      color: white;
       font-weight: 700;
       cursor: pointer;
     }
 
-    button:hover {
-      background: var(--accent-strong);
-    }
+    button.secondary { background: var(--blue); }
+    button.warning { background: var(--rose); }
+    button:hover { filter: brightness(0.92); }
 
-    .result {
+    .result-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
-      margin-top: 20px;
     }
 
-    .tile {
-      min-height: 112px;
+    .metric {
+      min-height: 124px;
+      padding: 16px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 16px;
       background: #fbfdff;
     }
 
-    .number {
+    .metric strong {
       display: block;
-      font-size: clamp(30px, 5vw, 52px);
-      font-weight: 800;
+      color: var(--teal);
+      font-size: clamp(28px, 4vw, 48px);
       line-height: 1;
-      color: var(--accent-strong);
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
     }
 
-    .unit {
+    .metric span {
       display: block;
       margin-top: 10px;
       color: var(--muted);
-      font-size: 15px;
     }
 
-    .target {
-      margin-top: 18px;
+    .details {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fff;
+      min-height: 84px;
+    }
+
+    .detail b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .detail span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .status {
+      margin-top: 14px;
       padding: 14px 16px;
-      border-left: 4px solid var(--accent);
-      background: #eef8f6;
-      color: var(--text);
+      border-left: 4px solid var(--teal);
+      background: #edf8f6;
+      line-height: 1.55;
     }
 
-    .past {
-      border-left-color: var(--warn);
-      background: #fff5e8;
+    .status.expired {
+      border-left-color: var(--gold);
+      background: #fff7e6;
     }
 
-    @media (max-width: 760px) {
-      main {
-        padding: 20px;
-      }
+    .history {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
 
-      .controls,
-      .result {
+    .history-card {
+      padding: 14px;
+      box-shadow: none;
+    }
+
+    .history-card h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .history-card p {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    @media (max-width: 860px) {
+      header, .grid, .details, .result-grid, .history {
         grid-template-columns: 1fr;
       }
+
+      .clock { text-align: left; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Calendar Counter</h1>
-    <p>오늘부터 무작위 미래 날짜를 뽑고, 그때까지 남은 시간을 실시간으로 계산합니다.</p>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Calendar Counter Lab</h1>
+        <p>Generate random future moments, count down in real time, compare calendar math, and keep a small local history of generated dates.</p>
+      </div>
+      <div class="clock" aria-live="polite">
+        <b>Now</b>
+        <div id="nowClock">Loading...</div>
+      </div>
+    </header>
 
-    <section class="controls" aria-label="날짜 계산 설정">
-      <label>
-        최소 며칠 뒤
-        <input id="minDays" type="number" min="1" max="3650" value="1">
-      </label>
-      <label>
-        최대 며칠 뒤
-        <input id="maxDays" type="number" min="1" max="3650" value="365">
-      </label>
-      <button id="pickDate" type="button">무작위 날짜 계산</button>
+    <section class="grid">
+      <aside class="panel">
+        <h2>Generator</h2>
+        <p class="subtext">Choose a range, pick a style, and let the app build a target date.</p>
+
+        <div class="controls">
+          <label>
+            Minimum days from now
+            <input id="minDays" type="number" min="1" max="36500" value="7">
+          </label>
+          <label>
+            Maximum days from now
+            <input id="maxDays" type="number" min="1" max="36500" value="365">
+          </label>
+          <label>
+            Generation mode
+            <select id="mode">
+              <option value="balanced">Balanced random</option>
+              <option value="weekend">Prefer weekends</option>
+              <option value="quarter">Quarter-end-ish</option>
+              <option value="chaos">Chaos clock</option>
+            </select>
+          </label>
+          <label>
+            Optional title
+            <input id="title" type="text" maxlength="48" value="Random deadline">
+          </label>
+          <div class="button-row">
+            <button id="generate" type="button">Generate</button>
+            <button id="save" class="secondary" type="button">Save</button>
+          </div>
+          <button id="clear" class="warning" type="button">Clear History</button>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <h2>Live Countdown</h2>
+        <p class="subtext">The main countdown updates every second. Extra calculations show alternate ways to understand the same target.</p>
+
+        <div class="result-grid" aria-live="polite">
+          <div class="metric"><strong id="days">0</strong><span>days</span></div>
+          <div class="metric"><strong id="hours">0</strong><span>hours</span></div>
+          <div class="metric"><strong id="minutes">0</strong><span>minutes</span></div>
+          <div class="metric"><strong id="seconds">0</strong><span>seconds</span></div>
+        </div>
+
+        <div class="details">
+          <div class="detail"><b>Target</b><span id="targetText">No target yet.</span></div>
+          <div class="detail"><b>Calendar delta</b><span id="calendarDelta">Waiting for generation.</span></div>
+          <div class="detail"><b>Generated by</b><span id="sourceText">Browser JavaScript</span></div>
+        </div>
+
+        <p id="status" class="status">Ready. Generate a date to start the counter.</p>
+      </section>
     </section>
 
-    <section class="result" aria-live="polite">
-      <div class="tile">
-        <span id="days" class="number">0</span>
-        <span class="unit">일</span>
-      </div>
-      <div class="tile">
-        <span id="hours" class="number">0</span>
-        <span class="unit">시간</span>
-      </div>
-      <div class="tile">
-        <span id="minutes" class="number">0</span>
-        <span class="unit">분</span>
-      </div>
-      <div class="tile">
-        <span id="seconds" class="number">0</span>
-        <span class="unit">초</span>
-      </div>
+    <section class="panel">
+      <h2>Saved Runs</h2>
+      <p class="subtext">Saved targets live in your browser storage, so they remain after refresh on the same machine.</p>
+      <div id="history" class="history"></div>
     </section>
-
-    <p id="targetText" class="target">버튼을 누르면 무작위 날짜가 선택됩니다.</p>
   </main>
 
   <script>
-    const minDaysInput = document.querySelector("#minDays");
-    const maxDaysInput = document.querySelector("#maxDays");
-    const pickDateButton = document.querySelector("#pickDate");
-    const targetText = document.querySelector("#targetText");
-    const output = {
-      days: document.querySelector("#days"),
-      hours: document.querySelector("#hours"),
-      minutes: document.querySelector("#minutes"),
-      seconds: document.querySelector("#seconds")
-    };
-
-    let targetDate = null;
-    let timer = null;
-
-    function randomInteger(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    function formatDate(date) {
-      return new Intl.DateTimeFormat("ko-KR", {
-        dateStyle: "full",
-        timeStyle: "medium"
-      }).format(date);
-    }
-
-    function setOutput(totalMs) {
-      const totalSeconds = Math.max(0, Math.floor(totalMs / 1000));
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      output.days.textContent = days.toLocaleString("ko-KR");
-      output.hours.textContent = hours;
-      output.minutes.textContent = minutes;
-      output.seconds.textContent = seconds;
-    }
-
-    function updateCounter() {
-      if (!targetDate) {
-        setOutput(0);
-        return;
+    class CalendarCounter {
+      constructor() {
+        this.target = null;
+        this.timer = null;
+        this.storageKey = "calendar-counter-history";
+        this.els = {
+          nowClock: document.querySelector("#nowClock"),
+          minDays: document.querySelector("#minDays"),
+          maxDays: document.querySelector("#maxDays"),
+          mode: document.querySelector("#mode"),
+          title: document.querySelector("#title"),
+          days: document.querySelector("#days"),
+          hours: document.querySelector("#hours"),
+          minutes: document.querySelector("#minutes"),
+          seconds: document.querySelector("#seconds"),
+          targetText: document.querySelector("#targetText"),
+          calendarDelta: document.querySelector("#calendarDelta"),
+          sourceText: document.querySelector("#sourceText"),
+          status: document.querySelector("#status"),
+          history: document.querySelector("#history")
+        };
       }
 
-      const remainingMs = targetDate.getTime() - Date.now();
-      setOutput(remainingMs);
+      start() {
+        document.querySelector("#generate").addEventListener("click", () => this.generate());
+        document.querySelector("#save").addEventListener("click", () => this.saveCurrent());
+        document.querySelector("#clear").addEventListener("click", () => this.clearHistory());
+        this.renderHistory();
+        this.generate();
+        setInterval(() => this.renderNow(), 1000);
+        this.renderNow();
+      }
 
-      if (remainingMs <= 0) {
-        clearInterval(timer);
-        targetText.textContent = "선택한 날짜가 이미 도착했습니다.";
-        targetText.classList.add("past");
+      randomInt(min, max) {
+        const low = Math.ceil(min);
+        const high = Math.floor(max);
+        return Math.floor(Math.random() * (high - low + 1)) + low;
+      }
+
+      normalizeRange() {
+        const min = Number(this.els.minDays.value) || 1;
+        const max = Number(this.els.maxDays.value) || min;
+        return {
+          min: Math.max(1, Math.min(min, max)),
+          max: Math.max(1, Math.max(min, max))
+        };
+      }
+
+      async generate() {
+        const range = this.normalizeRange();
+        const mode = this.els.mode.value;
+        const apiTarget = await this.fetchPythonTarget(range, mode);
+        const target = apiTarget || this.makeBrowserTarget(range, mode);
+        this.setTarget(target.date, target.source, target.note);
+      }
+
+      async fetchPythonTarget(range, mode) {
+        const params = new URLSearchParams({
+          min: String(range.min),
+          max: String(range.max),
+          mode
+        });
+
+        try {
+          const response = await fetch(`/api/random-date?${params.toString()}`);
+          if (!response.ok) return null;
+          const data = await response.json();
+          return {
+            date: new Date(data.iso),
+            source: "Python API + browser JavaScript",
+            note: data.note
+          };
+        } catch (error) {
+          return null;
+        }
+      }
+
+      makeBrowserTarget(range, mode) {
+        const days = this.randomInt(range.min, range.max);
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+
+        const strategies = {
+          balanced: () => date.setHours(this.randomInt(8, 20), this.randomInt(0, 59), this.randomInt(0, 59), 0),
+          weekend: () => {
+            while (![0, 6].includes(date.getDay())) date.setDate(date.getDate() + 1);
+            date.setHours(10, this.randomInt(0, 59), 0, 0);
+          },
+          quarter: () => {
+            const month = date.getMonth();
+            const quarterEndMonth = Math.min(11, Math.ceil((month + 1) / 3) * 3 - 1);
+            date.setMonth(quarterEndMonth + 1, 0);
+            date.setHours(17, 0, 0, 0);
+          },
+          chaos: () => date.setHours(this.randomInt(0, 23), this.randomInt(0, 59), this.randomInt(0, 59), this.randomInt(0, 999))
+        };
+
+        strategies[mode]();
+        return { date, source: "Browser JavaScript fallback", note: `${days} random days from now` };
+      }
+
+      setTarget(date, source, note) {
+        this.target = date;
+        this.els.sourceText.textContent = source;
+        this.els.targetText.textContent = this.formatDate(date);
+        this.els.status.textContent = note || "A new random target is active.";
+        this.els.status.classList.remove("expired");
+        clearInterval(this.timer);
+        this.tick();
+        this.timer = setInterval(() => this.tick(), 1000);
+      }
+
+      tick() {
+        if (!this.target) return;
+        const diff = this.target.getTime() - Date.now();
+        const safe = Math.max(0, Math.floor(diff / 1000));
+        const days = Math.floor(safe / 86400);
+        const hours = Math.floor((safe % 86400) / 3600);
+        const minutes = Math.floor((safe % 3600) / 60);
+        const seconds = safe % 60;
+
+        this.els.days.textContent = days.toLocaleString("en-US");
+        this.els.hours.textContent = String(hours).padStart(2, "0");
+        this.els.minutes.textContent = String(minutes).padStart(2, "0");
+        this.els.seconds.textContent = String(seconds).padStart(2, "0");
+        this.els.calendarDelta.textContent = this.describeCalendarDelta(new Date(), this.target);
+
+        if (diff <= 0) {
+          clearInterval(this.timer);
+          this.els.status.textContent = "The selected moment has arrived.";
+          this.els.status.classList.add("expired");
+        }
+      }
+
+      describeCalendarDelta(start, end) {
+        let years = end.getFullYear() - start.getFullYear();
+        let months = end.getMonth() - start.getMonth();
+        let days = end.getDate() - start.getDate();
+
+        if (days < 0) {
+          months -= 1;
+          const previousMonth = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+          days += previousMonth;
+        }
+
+        if (months < 0) {
+          years -= 1;
+          months += 12;
+        }
+
+        return `${years} years, ${months} months, ${days} days`;
+      }
+
+      formatDate(date) {
+        return new Intl.DateTimeFormat("en-US", {
+          dateStyle: "full",
+          timeStyle: "medium"
+        }).format(date);
+      }
+
+      renderNow() {
+        this.els.nowClock.textContent = this.formatDate(new Date());
+      }
+
+      readHistory() {
+        try {
+          return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      writeHistory(items) {
+        localStorage.setItem(this.storageKey, JSON.stringify(items.slice(0, 8)));
+      }
+
+      saveCurrent() {
+        if (!this.target) return;
+        const title = this.els.title.value.trim() || "Untitled target";
+        const items = this.readHistory();
+        items.unshift({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          title,
+          iso: this.target.toISOString(),
+          savedAt: new Date().toISOString()
+        });
+        this.writeHistory(items);
+        this.renderHistory();
+        this.els.status.textContent = `Saved "${title}" to local history.`;
+      }
+
+      clearHistory() {
+        this.writeHistory([]);
+        this.renderHistory();
+        this.els.status.textContent = "History cleared.";
+      }
+
+      renderHistory() {
+        const items = this.readHistory();
+        this.els.history.innerHTML = "";
+
+        if (items.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "subtext";
+          empty.textContent = "No saved runs yet.";
+          this.els.history.append(empty);
+          return;
+        }
+
+        for (const item of items) {
+          const card = document.createElement("article");
+          card.className = "history-card";
+
+          const title = document.createElement("h3");
+          title.textContent = item.title;
+
+          const target = document.createElement("p");
+          target.textContent = `Target: ${this.formatDate(new Date(item.iso))}`;
+
+          const saved = document.createElement("p");
+          saved.textContent = `Saved: ${this.formatDate(new Date(item.savedAt))}`;
+
+          const load = document.createElement("button");
+          load.type = "button";
+          load.textContent = "Load";
+          load.addEventListener("click", () => this.setTarget(new Date(item.iso), "Saved local history", item.title));
+
+          card.append(title, target, saved, load);
+          this.els.history.append(card);
+        }
       }
     }
 
-    function pickRandomDate() {
-      const minDays = Number(minDaysInput.value);
-      const maxDays = Number(maxDaysInput.value);
-      const safeMin = Math.max(1, Math.min(minDays, maxDays));
-      const safeMax = Math.max(safeMin, maxDays);
-      const randomDays = randomInteger(safeMin, safeMax);
-
-      targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + randomDays);
-      targetDate.setHours(randomInteger(0, 23), randomInteger(0, 59), randomInteger(0, 59), 0);
-
-      targetText.classList.remove("past");
-      targetText.textContent = `선택된 날짜: ${formatDate(targetDate)} (${randomDays.toLocaleString("ko-KR")}일 뒤)`;
-
-      clearInterval(timer);
-      updateCounter();
-      timer = setInterval(updateCounter, 1000);
-    }
-
-    pickDateButton.addEventListener("click", pickRandomDate);
-    pickRandomDate();
+    new CalendarCounter().start();
   </script>
 </body>
 </html>
