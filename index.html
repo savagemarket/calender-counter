@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendar Counter</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #1b2430;
+      --muted: #607086;
+      --accent: #0f7b6c;
+      --accent-strong: #0a5c51;
+      --line: #dce4ee;
+      --warn: #b35b00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Noto Sans KR", sans-serif;
+    }
+
+    main {
+      width: min(920px, calc(100vw - 32px));
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 18px 45px rgba(27, 36, 48, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 26px 0;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    button {
+      height: 44px;
+      align-self: end;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 16px;
+      color: #fff;
+      background: var(--accent);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+    }
+
+    .result {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .tile {
+      min-height: 112px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfdff;
+    }
+
+    .number {
+      display: block;
+      font-size: clamp(30px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent-strong);
+    }
+
+    .unit {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .target {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: #eef8f6;
+      color: var(--text);
+    }
+
+    .past {
+      border-left-color: var(--warn);
+      background: #fff5e8;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 20px;
+      }
+
+      .controls,
+      .result {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Calendar Counter</h1>
+    <p>오늘부터 무작위 미래 날짜를 뽑고, 그때까지 남은 시간을 실시간으로 계산합니다.</p>
+
+    <section class="controls" aria-label="날짜 계산 설정">
+      <label>
+        최소 며칠 뒤
+        <input id="minDays" type="number" min="1" max="3650" value="1">
+      </label>
+      <label>
+        최대 며칠 뒤
+        <input id="maxDays" type="number" min="1" max="3650" value="365">
+      </label>
+      <button id="pickDate" type="button">무작위 날짜 계산</button>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="tile">
+        <span id="days" class="number">0</span>
+        <span class="unit">일</span>
+      </div>
+      <div class="tile">
+        <span id="hours" class="number">0</span>
+        <span class="unit">시간</span>
+      </div>
+      <div class="tile">
+        <span id="minutes" class="number">0</span>
+        <span class="unit">분</span>
+      </div>
+      <div class="tile">
+        <span id="seconds" class="number">0</span>
+        <span class="unit">초</span>
+      </div>
+    </section>
+
+    <p id="targetText" class="target">버튼을 누르면 무작위 날짜가 선택됩니다.</p>
+  </main>
+
+  <script>
+    const minDaysInput = document.querySelector("#minDays");
+    const maxDaysInput = document.querySelector("#maxDays");
+    const pickDateButton = document.querySelector("#pickDate");
+    const targetText = document.querySelector("#targetText");
+    const output = {
+      days: document.querySelector("#days"),
+      hours: document.querySelector("#hours"),
+      minutes: document.querySelector("#minutes"),
+      seconds: document.querySelector("#seconds")
+    };
+
+    let targetDate = null;
+    let timer = null;
+
+    function randomInteger(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("ko-KR", {
+        dateStyle: "full",
+        timeStyle: "medium"
+      }).format(date);
+    }
+
+    function setOutput(totalMs) {
+      const totalSeconds = Math.max(0, Math.floor(totalMs / 1000));
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      output.days.textContent = days.toLocaleString("ko-KR");
+      output.hours.textContent = hours;
+      output.minutes.textContent = minutes;
+      output.seconds.textContent = seconds;
+    }
+
+    function updateCounter() {
+      if (!targetDate) {
+        setOutput(0);
+        return;
+      }
+
+      const remainingMs = targetDate.getTime() - Date.now();
+      setOutput(remainingMs);
+
+      if (remainingMs <= 0) {
+        clearInterval(timer);
+        targetText.textContent = "선택한 날짜가 이미 도착했습니다.";
+        targetText.classList.add("past");
+      }
+    }
+
+    function pickRandomDate() {
+      const minDays = Number(minDaysInput.value);
+      const maxDays = Number(maxDaysInput.value);
+      const safeMin = Math.max(1, Math.min(minDays, maxDays));
+      const safeMax = Math.max(safeMin, maxDays);
+      const randomDays = randomInteger(safeMin, safeMax);
+
+      targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + randomDays);
+      targetDate.setHours(randomInteger(0, 23), randomInteger(0, 59), randomInteger(0, 59), 0);
+
+      targetText.classList.remove("past");
+      targetText.textContent = `선택된 날짜: ${formatDate(targetDate)} (${randomDays.toLocaleString("ko-KR")}일 뒤)`;
+
+      clearInterval(timer);
+      updateCounter();
+      timer = setInterval(updateCounter, 1000);
+    }
+
+    pickDateButton.addEventListener("click", pickRandomDate);
+    pickRandomDate();
+  </script>
+</body>
+</html>
